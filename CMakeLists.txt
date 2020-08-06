@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(libpressio_error_injector VERSION "0.2.1" LANGUAGES C CXX)
+project(libpressio_error_injector VERSION "0.2.2" LANGUAGES C CXX)
 
 #correct was to set a default build type
 # https://blog.kitware.com/cmake-and-the-default-build-type/
@@ -35,12 +35,6 @@ add_library(libpressio_error_injector
 
   #private headers
   )
-target_include_directories(
-  libpressio_error_injector
-  PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/libpressio_error_injector>
-  )
 target_link_libraries(libpressio_error_injector PUBLIC LibPressio::libpressio)
 target_compile_features(libpressio_error_injector PUBLIC cxx_std_${LIBPRESSIO_ERROR_INJECTOR_CXX_VERSION})
 
@@ -59,7 +53,6 @@ install(TARGETS libpressio_error_injector EXPORT LibPressioErrorInjectorConfig
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 install(EXPORT LibPressioErrorInjectorConfig NAMESPACE LibPressioErrorInjector:: DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/LibPressioErrorInjector/cmake)
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libpressio_error_injector)
 
 option(BUILD_DOCS "build the documetation" OFF)
 if(BUILD_DOCS)
@@ -75,7 +68,6 @@ if(BUILD_DOCS)
     docs
     ${PROJECT_SOURCE_DIR}/docs
     ${PROJECT_SOURCE_DIR}/README.md
-    ${PROJECT_SOURCE_DIR}/include
     COMMENT "Generate Documenation"
   )
 endif()
