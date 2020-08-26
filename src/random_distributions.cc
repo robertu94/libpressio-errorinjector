@@ -50,7 +50,7 @@ is_one_arg_constructable<Distribution, typename Distribution::result_type>,
 is_two_arg_constructable<Distribution, typename Distribution::result_type>
   >::value
   , typename Distribution::param_type>::type
-make_param(std::vector<typename Distribution::result_type> const& params)
+make_param(std::vector<double> const& params)
 {
   if(params.size() == 2) {
     return typename Distribution::param_type(params[0], params[1]);
@@ -68,7 +68,7 @@ typename std::enable_if<
   compat::negation<is_two_arg_constructable<Distribution, typename Distribution::result_type>>
   >::value,
   typename Distribution::param_type>::type
-make_param(std::vector<typename Distribution::result_type> const& params)
+make_param(std::vector<double> const& params)
 {
   if(params.size() == 1) {
     return typename Distribution::param_type(params[0]);
@@ -112,7 +112,7 @@ class polymorphic_distribution_impl: public polymorphic_distribution<typename Im
     impl.reset();
   }
 
-  void configure(std::vector<result_type> const& parameters) final {
+  void configure(std::vector<double> const& parameters) final {
     impl.param(make_param<Impl>(parameters));
   }
 
@@ -128,33 +128,64 @@ pressio_registry<std::unique_ptr<polymorphic_generator>>& generator_registry() {
   static pressio_registry<std::unique_ptr<polymorphic_generator>> registry;
   return registry;
 }
-pressio_registry<std::unique_ptr<polymorphic_distribution<float>>>& distribution_float_registry() {
-  static pressio_registry<std::unique_ptr<polymorphic_distribution<float>>> registry;
-  return registry;
+
+template <class T>
+pressio_registry<std::unique_ptr<polymorphic_distribution<T>>>& get_distribution_registry() {
+  assert(false);
 }
-pressio_registry<std::unique_ptr<polymorphic_distribution<double>>>& distribution_double_registry() {
-  static pressio_registry<std::unique_ptr<polymorphic_distribution<double>>> registry;
-  return registry;
-}
+
+#define CREATE_REGISTRY(type) template <> \
+    pressio_registry<std::unique_ptr<polymorphic_distribution<type>>>& get_distribution_registry<type>() { \
+    static pressio_registry<std::unique_ptr<polymorphic_distribution<type>>> registry; \
+    return registry; \
+  } 
+CREATE_REGISTRY(float)
+CREATE_REGISTRY(double)
+CREATE_REGISTRY(int8_t)
+CREATE_REGISTRY(int16_t)
+CREATE_REGISTRY(int32_t)
+CREATE_REGISTRY(int64_t)
+CREATE_REGISTRY(uint8_t)
+CREATE_REGISTRY(uint16_t)
+CREATE_REGISTRY(uint32_t)
+CREATE_REGISTRY(uint64_t)
+
+
 
 #define RANDOM_REGISTER_STD_GENERATOR(type) \
   pressio_register type (generator_registry(), #type, []{return compat::make_unique<polymorphic_generator_impl<std::type>>(); })
-#define RANDOM_REGISTER_STD_DISTRIBUTION(type) \
-  pressio_register f_##type (distribution_float_registry(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<float>>>(); }); \
-  pressio_register d_##type (distribution_double_registry(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<double>>>(); });
+#define RANDOM_REGISTER_REAL_STD_DISTRIBUTION(type) \
+  pressio_register f_##type (get_distribution_registry<float>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<float>>>(); }); \
+  pressio_register d_##type (get_distribution_registry<double>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<double>>>(); });
+#define RANDOM_REGISTER_INT_STD_DISTRIBUTION(type) \
+  pressio_register i8_##type (get_distribution_registry<int8_t>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<int8_t>>>(); }); \
+  pressio_register i16_##type (get_distribution_registry<int16_t>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<int16_t>>>(); }); \
+  pressio_register i32_##type (get_distribution_registry<int32_t>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<int32_t>>>(); }); \
+  pressio_register i64_##type (get_distribution_registry<int64_t>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<int64_t>>>(); }); \
+  pressio_register u8_##type  (get_distribution_registry<uint8_t>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<uint8_t>>>(); }); \
+  pressio_register u16_##type (get_distribution_registry<uint16_t>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<uint16_t>>>(); }); \
+  pressio_register u32_##type (get_distribution_registry<uint32_t>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<uint32_t>>>(); }); \
+  pressio_register u64_##type (get_distribution_registry<uint64_t>(), #type, []{return compat::make_unique<polymorphic_distribution_impl<std::type<uint64_t>>>(); });
 
 namespace {
   RANDOM_REGISTER_STD_GENERATOR(minstd_rand);
   RANDOM_REGISTER_STD_GENERATOR(mt19937_64);
   RANDOM_REGISTER_STD_GENERATOR(ranlux48_base);
   RANDOM_REGISTER_STD_GENERATOR(knuth_b);
-  RANDOM_REGISTER_STD_DISTRIBUTION(cauchy_distribution);
-  RANDOM_REGISTER_STD_DISTRIBUTION(chi_squared_distribution);
-  RANDOM_REGISTER_STD_DISTRIBUTION(extreme_value_distribution);
-  RANDOM_REGISTER_STD_DISTRIBUTION(fisher_f_distribution);
-  RANDOM_REGISTER_STD_DISTRIBUTION(gamma_distribution);
-  RANDOM_REGISTER_STD_DISTRIBUTION(lognormal_distribution);
-  RANDOM_REGISTER_STD_DISTRIBUTION(normal_distribution);
-  RANDOM_REGISTER_STD_DISTRIBUTION(student_t_distribution);
-  RANDOM_REGISTER_STD_DISTRIBUTION(weibull_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(cauchy_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(chi_squared_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(extreme_value_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(fisher_f_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(gamma_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(lognormal_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(normal_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(student_t_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(weibull_distribution);
+  RANDOM_REGISTER_REAL_STD_DISTRIBUTION(uniform_real_distribution);
+  RANDOM_REGISTER_INT_STD_DISTRIBUTION(uniform_int_distribution);
+  RANDOM_REGISTER_INT_STD_DISTRIBUTION(binomial_distribution);
+  RANDOM_REGISTER_INT_STD_DISTRIBUTION(negative_binomial_distribution);
+  RANDOM_REGISTER_INT_STD_DISTRIBUTION(geometric_distribution);
+  RANDOM_REGISTER_INT_STD_DISTRIBUTION(poisson_distribution);
+
 }

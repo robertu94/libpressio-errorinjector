@@ -1,4 +1,5 @@
 #include <iterator>
+#include <stdexcept>
 #include <time.h>
 #include <cstdint>
 #include <random>
@@ -28,21 +29,39 @@ namespace {
 }
 
 
-  struct inject_error_float {
-    inject_error_float(polymorphic_distribution<float>& dist, polymorphic_generator& gen): dist(dist), gen(gen) {}
+  struct inject_error {
+    inject_error( pressio_data& dist_args,
+          compat::optional<unsigned int>& seed,
+          std::string& gen_name,
+          std::string& dist_name
+        ): dist_args(dist_args), seed(seed), gen_name(gen_name), dist_name(dist_name)  {}
 
     template <class T>
     int operator()(T* begin, T* end) {
+      auto gen = generator_registry().build(gen_name);
+      if(!gen) {
+        throw std::runtime_error("invalid generator " + gen_name);
+      }
+      auto gen_seed = std::seed_seq{seed.value_or(time(nullptr))};
+      gen->seed(gen_seed);
+      auto dist = get_distribution_registry<T>().build(dist_name);
+      if(!dist) {
+        throw std::runtime_error("invalid distribution " + dist_name);
+      }
+      dist->configure(dist_args.to_vector<double>());
+
            
       while(begin != end) {
-        *begin += dist(gen);
+        *begin += (*dist)(*gen);
         begin++;
       }
       return 0;
     }
     private:
-    polymorphic_distribution<float>& dist;
-    polymorphic_generator& gen;
+    pressio_data& dist_args;
+    compat::optional<unsigned int>& seed;
+    std::string& gen_name;
+    std::string& dist_name;
   };
 }
 
@@ -53,14 +72,16 @@ class random_error_injector_plugin: public libpressio_compressor_plugin {
     set(options, "random_error_injector:seed", seed);
     set(options, "random_error_injector:dist_name", dist_name);
     set(options, "random_error_injector:gen_name", gen_name);
-    set(options, "random_error_injector:dist_args", pressio_data(dist_args.begin(), dist_args.end()));
+    set(options, "random_error_injector:dist_args", dist_args);
+    set_meta(options, "random_error_injector:compressor", compressor_name, compressor);
     return options;
   };
 
   struct pressio_options 	get_configuration_impl () const override {
     pressio_options options;
     set(options, "pressio:thread_safe", (int)pressio_thread_safety_multiple);
-    set(options, "random_error_injector:distribution", plugin_names(distribution_float_registry()));
+    set(options, "random_error_injector:real_distributions", plugin_names(get_distribution_registry<float>()));
+    set(options, "random_error_injector:int_distributions", plugin_names(get_distribution_registry<int32_t>()));
     set(options, "random_error_injector:generators", plugin_names(generator_registry()));
     return options;
   };
@@ -69,7 +90,7 @@ class random_error_injector_plugin: public libpressio_compressor_plugin {
     get(options, "random_error_injector:seed", &seed);
     std::string tmp_name;
     if(get(options, "random_error_injector:dist_name", &tmp_name) == pressio_options_key_set) {
-      if(distribution_float_registry().contains(tmp_name)) {
+      if(get_distribution_registry<float>().contains(tmp_name) || get_distribution_registry<uint64_t>().contains(tmp_name)) {
         dist_name = std::move(tmp_name);
       }
     }
@@ -81,40 +102,26 @@ class random_error_injector_plugin: public libpressio_compressor_plugin {
 
     }
 
-    pressio_data tmp_data;
-    if(get(options, "random_error_injector:dist_args", &tmp_data) == pressio_options_key_set) {
-      dist_args = tmp_data.to_vector<float>();
-    }
+    get(options, "random_error_injector:dist_args", &dist_args);
+    get_meta(options, "random_error_injector:compressor", compressor_plugins(), compressor_name, compressor);
 
-    if(get(options,"random_error_injector:compressor", &tmp_name) == pressio_options_key_set) {
-      if(tmp_name != compressor_name) {
-        auto plugin = compressor_plugins().build(tmp_name);
-        if(plugin) {
-          compressor = std::move(plugin);
-          compressor_name = std::move(tmp_name);
-        } else {
-          return set_error(1, "invalid search method");
-        }
-      }
-
-    }
     return 0;
   }
 
   int 	compress_impl (const pressio_data *input, struct pressio_data *output) override {
     pressio_data tmp = pressio_data::clone(*input);
-    auto gen = generator_registry().build(gen_name);
-    auto gen_seed = std::seed_seq{seed.value_or(time(nullptr))};
-    gen->seed(gen_seed);
-    auto dist_f = distribution_float_registry().build(dist_name);
-    dist_f->configure(dist_args);
-    pressio_data_for_each<int>(tmp, inject_error_float(*dist_f, *gen));
+    try {
+    pressio_data_for_each<int>(tmp, inject_error(dist_args, seed, gen_name, dist_name));
+    } catch (std::invalid_argument const&) {
+      return set_error(1, "invalid number of arguments passed " + std::to_string(dist_args.num_elements()));
+    } catch (std::runtime_error const& e) {
+      return set_error(2, e.what());
+    }
     return compressor->compress(&tmp, output);
   };
 
    int 	decompress_impl (const pressio_data *input, struct pressio_data *output) override {
-     *output = pressio_data::clone(*input);
-     return 0;
+     return compressor->decompress(input, output);
    }
 
   public:
@@ -138,14 +145,14 @@ class random_error_injector_plugin: public libpressio_compressor_plugin {
     return "random_error_injector";
   }
   std::shared_ptr<libpressio_compressor_plugin> clone() override {
-    return std::make_shared<random_error_injector_plugin>(*this);
+    return std::make_unique<random_error_injector_plugin>(*this);
   }
 
   private:
-  std::string dist_name, gen_name, compressor_name;
-  std::vector<float> dist_args;
+  std::string dist_name="uniform_real_distribution", gen_name="mt19937_64", compressor_name = "noop";
+  pressio_data dist_args;
   compat::optional<unsigned int> seed;
-  pressio_compressor compressor;
+  pressio_compressor compressor = compressor_plugins().build("noop");
 };
 
 static pressio_register X(compressor_plugins(), "random_error_injector", [](){ return compat::make_unique<random_error_injector_plugin>(); });
