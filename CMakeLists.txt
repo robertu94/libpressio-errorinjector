@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(libpressio_error_injector VERSION "0.3.0" LANGUAGES C CXX)
+project(libpressio_error_injector VERSION "0.4.0" LANGUAGES C CXX)
 
 #correct was to set a default build type
 # https://blog.kitware.com/cmake-and-the-default-build-type/
@@ -26,6 +26,7 @@ endif()
 include(GNUInstallDirs)
 
 find_package(LibPressio REQUIRED)
+find_package(std_compat REQUIRED)
 
 add_library(libpressio_error_injector
   #core features

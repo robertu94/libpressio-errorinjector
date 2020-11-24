@@ -14,8 +14,8 @@
 #include "libpressio_ext/cpp/compressor.h"
 #include "libpressio_ext/cpp/options.h"
 #include "libpressio_ext/cpp/pressio.h"
-#include "libpressio_ext/compat/optional.h"
-#include "libpressio_ext/compat/memory.h"
+#include "std_compat/optional.h"
+#include "std_compat/memory.h"
 #include "random_distributions.h"
 
 namespace {

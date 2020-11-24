@@ -4,7 +4,7 @@
 #include <utility>
 #include <random>
 #include <stdexcept>
-#include <libpressio_ext/compat/std_compat.h>
+#include <std_compat/std_compat.h>
 #include "random_distributions.h"
 
 template <class Impl>

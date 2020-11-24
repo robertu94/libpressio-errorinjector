@@ -1,5 +1,3 @@
-#include <bits/stdint-intn.h>
-#include <bits/stdint-uintn.h>
 #include <cmath>
 #include <iterator>
 #include <stdexcept>
@@ -17,8 +15,8 @@
 #include "libpressio_ext/cpp/compressor.h"
 #include "libpressio_ext/cpp/options.h"
 #include "libpressio_ext/cpp/pressio.h"
-#include "libpressio_ext/compat/optional.h"
-#include "libpressio_ext/compat/memory.h"
+#include "std_compat/optional.h"
+#include "std_compat/memory.h"
 
 enum class bit_action {
   flip = 1,
