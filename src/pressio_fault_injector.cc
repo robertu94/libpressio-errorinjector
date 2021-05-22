@@ -59,9 +59,21 @@ class fault_injector_plugin: public libpressio_compressor_plugin {
     return options;
   };
 
+  struct pressio_options 	get_documentation_impl () const override {
+    struct pressio_options options = pressio_options();
+    set_meta_docs(options, "fault_injector:compressor", "name of the compressor to inject errors after compression", compressor);
+    set(options, "pressio:description", "injects single bit errors of specified distribution");
+    set(options, "fault_injector:seed", "random number seed");
+    set(options, "fault_injector:injections", "the number of injections to make");
+    set(options, "fault_injector:injection_mode", "the method of performing injections");
+    set(options, "fault_injector:injection_mode_str", "human interpretable mode");
+    return options;
+  };
+
   struct pressio_options 	get_configuration_impl () const override {
     pressio_options options;
     set(options, "pressio:thread_safe", (int)pressio_thread_safety_multiple);
+    set(options, "fault_injector:injection_mode_str", std::vector<std::string>{"set", "unset", "flip"});
     return options;
   };
 

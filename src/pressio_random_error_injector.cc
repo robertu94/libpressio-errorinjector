@@ -69,13 +69,28 @@ class random_error_injector_plugin: public libpressio_compressor_plugin {
 
   struct pressio_options 	get_options_impl () const override {
     struct pressio_options options = pressio_options();
+    set_meta(options, "random_error_injector:compressor", compressor_name, compressor);
     set(options, "random_error_injector:seed", seed);
     set(options, "random_error_injector:dist_name", dist_name);
     set(options, "random_error_injector:gen_name", gen_name);
     set(options, "random_error_injector:dist_args", dist_args);
-    set_meta(options, "random_error_injector:compressor", compressor_name, compressor);
     return options;
   };
+
+  struct pressio_options 	get_documentation_impl () const override {
+    struct pressio_options options = pressio_options();
+    set_meta_docs(options, "random_error_injector:compressor", "compressor to use after applying errors", compressor);
+    set(options, "pressio:description", "injects errors according to the specified distribution");
+    set(options, "random_error_injector:seed", "random seed to use");
+    set(options, "random_error_injector:dist_name", "name of the error distribution to use");
+    set(options, "random_error_injector:gen_name", "name of the random number generator to use");
+    set(options, "random_error_injector:dist_args", "the distribution arguments");
+    set(options, "random_error_injector:real_distributions", "available distributions for real numbers");
+    set(options, "random_error_injector:int_distributions", "available distributions for integer numbers");
+    set(options, "random_error_injector:generators", "available distribution generators");
+    return options;
+  };
+
 
   struct pressio_options 	get_configuration_impl () const override {
     pressio_options options;
