@@ -6,12 +6,17 @@
 
 class polymorphic_generator {
   public:
-    using result_type = std::uint64_t;
+    //in libstdcxx, all random geneators have the same result type, use it
+    using result_type = std::minstd_rand::result_type;
 
     virtual ~polymorphic_generator()=default;
 
-    virtual result_type min()=0;
-    virtual result_type max()=0;
+    static constexpr result_type min() {
+      return std::minstd_rand::min();
+    }
+    static constexpr result_type max() {
+      return std::minstd_rand::max();
+    }
     virtual result_type operator()()=0;
     virtual void seed(std::seed_seq& seed)=0;
     virtual std::unique_ptr<polymorphic_generator> clone()=0;

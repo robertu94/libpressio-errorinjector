@@ -12,8 +12,6 @@ class polymorphic_generator_impl : public polymorphic_generator {
   public: template <class... T>
   polymorphic_generator_impl(T&&... args): impl(std::forward<T>(args)...) {}
 
-  typename polymorphic_generator::result_type min() final { return impl.min(); }
-  typename polymorphic_generator::result_type max() final { return impl.max(); }
   typename polymorphic_generator::result_type operator()() final { return impl(); }
   void seed(std::seed_seq& seed) final { impl.seed(seed); } 
   std::unique_ptr<polymorphic_generator> clone() final {
