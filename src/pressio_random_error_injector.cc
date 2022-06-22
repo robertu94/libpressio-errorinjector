@@ -18,6 +18,10 @@
 #include "std_compat/memory.h"
 #include "random_distributions.h"
 
+extern "C" 
+void libpressio_register_error_injector() {
+}
+
 namespace {
   template <class Registry>
   std::vector<std::string> plugin_names(Registry const& plugins) {

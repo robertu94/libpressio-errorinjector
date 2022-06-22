@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(libpressio_error_injector VERSION "0.6.0" LANGUAGES C CXX)
+project(libpressio_error_injector VERSION "0.7.0" LANGUAGES C CXX)
 
 #correct was to set a default build type
 # https://blog.kitware.com/cmake-and-the-default-build-type/
@@ -39,6 +39,11 @@ add_library(libpressio_error_injector
   )
 target_link_libraries(libpressio_error_injector PUBLIC LibPressio::libpressio)
 target_compile_features(libpressio_error_injector PUBLIC cxx_std_${LIBPRESSIO_ERROR_INJECTOR_CXX_VERSION})
+target_include_directories(
+  libpressio_error_injector PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
 
 option(USE_CLANG_TIDY "include clang-tidy warnings in the build log" OFF)
 if(USE_CLANG_TIDY)
@@ -47,14 +52,31 @@ if(USE_CLANG_TIDY)
   set_target_properties(libpressio_error_injector PROPERTIES C_CLANG_TIDY "${CLANG_TIDY}")
 endif()
 
-export(TARGETS libpressio_error_injector NAMESPACE LibPressioErrorInjector:: FILE
-  LibPressioErrorInjectorConfig.cmake)
-install(TARGETS libpressio_error_injector EXPORT LibPressioErrorInjectorConfig
+install(TARGETS libpressio_error_injector EXPORT LibPressioErrorInjectorTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
-install(EXPORT LibPressioErrorInjectorConfig NAMESPACE LibPressioErrorInjector:: DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/LibPressioErrorInjector/cmake)
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/libpressio_error_injector.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  )
+install(EXPORT LibPressioErrorInjectorTargets NAMESPACE LibPressioErrorInjector:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LibPressioErrorInjector/)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/LibPressioErrorInjectorConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/LibPressioErrorInjectorConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LibPressioErrorInjector
+)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/LibPressioErrorInjectorConfigVersion.cmake"
+  VERSION "${PROJECT_VERSION}"
+  COMPATIBILITY AnyNewerVersion
+)
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/LibPressioErrorInjectorConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/LibPressioErrorInjectorConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/LibPressioErrorInjector
+)
 
 option(BUILD_DOCS "build the documetation" OFF)
 if(BUILD_DOCS)
