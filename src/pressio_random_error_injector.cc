@@ -98,7 +98,7 @@ class random_error_injector_plugin: public libpressio_compressor_plugin {
 
   struct pressio_options 	get_configuration_impl () const override {
     pressio_options options;
-    set(options, "pressio:thread_safe", (int)pressio_thread_safety_multiple);
+    set(options, "pressio:thread_safe", pressio_thread_safety_multiple);
     set(options, "random_error_injector:real_distributions", plugin_names(get_distribution_registry<float>()));
     set(options, "random_error_injector:int_distributions", plugin_names(get_distribution_registry<int32_t>()));
     set(options, "random_error_injector:generators", plugin_names(generator_registry()));
