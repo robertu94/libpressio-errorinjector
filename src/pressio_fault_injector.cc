@@ -74,6 +74,14 @@ class fault_injector_plugin: public libpressio_compressor_plugin {
     pressio_options options;
     set(options, "pressio:thread_safe", pressio_thread_safety_multiple);
     set(options, "fault_injector:injection_mode_str", std::vector<std::string>{"set", "unset", "flip"});
+    
+        std::vector<std::string> invalidations {"fault_injector:seed", "fault_injector:injections", "fault_injector:injection_mode", "fault_injector:injection_mode_str"}; 
+        std::vector<pressio_configurable const*> invalidation_children {&*compressor}; 
+        
+        set(options, "predictors:error_dependent", get_accumulate_configuration("predictors:error_dependent", invalidation_children, invalidations));
+        set(options, "predictors:error_agnostic", get_accumulate_configuration("predictors:error_agnostic", invalidation_children, invalidations));
+        set(options, "predictors:runtime", get_accumulate_configuration("predictors:runtime", invalidation_children, invalidations));
+
     return options;
   };
 

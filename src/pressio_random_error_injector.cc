@@ -102,6 +102,14 @@ class random_error_injector_plugin: public libpressio_compressor_plugin {
     set(options, "random_error_injector:real_distributions", plugin_names(get_distribution_registry<float>()));
     set(options, "random_error_injector:int_distributions", plugin_names(get_distribution_registry<int32_t>()));
     set(options, "random_error_injector:generators", plugin_names(generator_registry()));
+    
+        std::vector<std::string> invalidations {"random_error_injector:seed", "random_error_injector:dist_args", "random_error_injector:dist_name", "random_error_injector:gen_name"}; 
+        std::vector<pressio_configurable const*> invalidation_children {&*compressor}; 
+        
+        set(options, "predictors:error_dependent", get_accumulate_configuration("predictors:error_dependent", invalidation_children, invalidations));
+        set(options, "predictors:error_agnostic", get_accumulate_configuration("predictors:error_agnostic", invalidation_children, invalidations));
+        set(options, "predictors:runtime", get_accumulate_configuration("predictors:runtime", invalidation_children, invalidations));
+
     return options;
   };
 

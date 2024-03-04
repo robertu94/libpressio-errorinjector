@@ -53,3 +53,4 @@ template <> pressio_registry<std::unique_ptr<polymorphic_distribution<uint8_t>>>
 template <> pressio_registry<std::unique_ptr<polymorphic_distribution<uint16_t>>>& get_distribution_registry<uint16_t>();
 template <> pressio_registry<std::unique_ptr<polymorphic_distribution<uint32_t>>>& get_distribution_registry<uint32_t>();
 template <> pressio_registry<std::unique_ptr<polymorphic_distribution<uint64_t>>>& get_distribution_registry<uint64_t>();
+template <> pressio_registry<std::unique_ptr<polymorphic_distribution<bool>>>& get_distribution_registry<bool>();
