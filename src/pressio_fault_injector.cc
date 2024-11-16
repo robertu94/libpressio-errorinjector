@@ -15,6 +15,7 @@
 #include "libpressio_ext/cpp/compressor.h"
 #include "libpressio_ext/cpp/options.h"
 #include "libpressio_ext/cpp/pressio.h"
+#include "libpressio_ext/cpp/domain_manager.h"
 #include "std_compat/optional.h"
 #include "std_compat/memory.h"
 
@@ -103,6 +104,7 @@ class fault_injector_plugin: public libpressio_compressor_plugin {
 
   int 	compress_impl (const pressio_data *input, struct pressio_data *output) override {
     int ret = compressor->compress(input, output);
+    *output = domain_manager().make_readable(domain_plugins().build("malloc"), std::move(*output));
     uint8_t* bytes = static_cast<uint8_t*>(output->data());
     size_t len = output->size_in_bytes();
 

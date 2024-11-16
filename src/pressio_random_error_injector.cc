@@ -12,6 +12,7 @@
 #include "pressio_compressor.h"
 #include "libpressio_ext/cpp/data.h"
 #include "libpressio_ext/cpp/compressor.h"
+#include "libpressio_ext/cpp/domain_manager.h"
 #include "libpressio_ext/cpp/options.h"
 #include "libpressio_ext/cpp/pressio.h"
 #include "std_compat/optional.h"
@@ -136,7 +137,7 @@ class random_error_injector_plugin: public libpressio_compressor_plugin {
   }
 
   int 	compress_impl (const pressio_data *input, struct pressio_data *output) override {
-    pressio_data tmp = pressio_data::clone(*input);
+    pressio_data tmp = pressio_data::clone(domain_manager().make_readable(domain_plugins().build("malloc"),*input));
     try {
     pressio_data_for_each<int>(tmp, inject_error(dist_args, seed, gen_name, dist_name));
     } catch (std::invalid_argument const&) {
